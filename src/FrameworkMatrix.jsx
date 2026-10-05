@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 
 // ===== FRAMEWORK MATRIX =====
 // Heatmap of the recommendation table: which frameworks come up for which role (or question).
@@ -58,6 +58,8 @@ function stepFor(count, max) {
 export default function FrameworkMatrix({ frameworks, frameworkKeys, roles, goals, getRecommendation, currentRole, currentGoal, recommended = [] }) {
   const [axis, setAxis] = useState("role");
   const [active, setActive] = useState(null); // { fw, col }
+  const [focusPos, setFocusPos] = useState({ r: 0, c: 0 }); // roving tabindex: the one cell Tab lands on
+  const gridRef = useRef(null);
   const [showTable, setShowTable] = useState(false);
   const scrollRef = useRef(null);
   const [overflowing, setOverflowing] = useState(false);
@@ -73,7 +75,10 @@ export default function FrameworkMatrix({ frameworks, frameworkKeys, roles, goal
   }, []);
   const sticky = overflowing ? STICKY : {};
 
-  const { columns, others, cells } = buildMatrix(axis, { frameworkKeys, roles, goals, getRecommendation });
+  const { columns, others, cells } = useMemo(
+    () => buildMatrix(axis, { frameworkKeys, roles, goals, getRecommendation }),
+    [axis, frameworkKeys, roles, goals, getRecommendation],
+  );
   const max = others.length;
   const current = axis === "role" ? currentRole : currentGoal;
   const otherNoun = axis === "role" ? "questions" : "roles";
@@ -84,8 +89,20 @@ export default function FrameworkMatrix({ frameworks, frameworkKeys, roles, goal
   const activeCell = active && cells[active.fw]?.[active.col];
   const activeCol = active && columns.find(c => c.id === active.col);
 
+  // Arrow keys move within the grid (ARIA grid pattern); Tab enters and leaves it in one stop.
+  const onCellKeyDown = (e, r, c) => {
+    const last = { r: frameworkKeys.length - 1, c: columns.length - 1 };
+    const moves = { ArrowUp: [r - 1, c], ArrowDown: [r + 1, c], ArrowLeft: [r, c - 1], ArrowRight: [r, c + 1], Home: [r, 0], End: [r, last.c] };
+    if (!moves[e.key]) return;
+    e.preventDefault();
+    const [nr, nc] = moves[e.key];
+    if (nr < 0 || nc < 0 || nr > last.r || nc > last.c) return;
+    setFocusPos({ r: nr, c: nc });
+    gridRef.current?.querySelector(`[data-pos="${nr}-${nc}"]`)?.focus();
+  };
+
   const toggleButton = (value, label) => (
-    <button key={value} onClick={() => { setAxis(value); setActive(null); }} aria-pressed={axis === value} style={{
+    <button key={value} onClick={() => { setAxis(value); setActive(null); setFocusPos({ r: 0, c: 0 }); }} aria-pressed={axis === value} style={{
       background: axis === value ? "rgba(110,156,232,0.15)" : "transparent", border: axis === value ? "1px solid rgba(110,156,232,0.3)" : "1px solid rgba(255,255,255,0.08)",
       color: axis === value ? "#8bb4e8" : "#6b7fa3", padding: "5px 12px", borderRadius: 6, fontSize: 11, fontFamily: mono, cursor: "pointer",
     }}>{label}</button>
@@ -104,7 +121,7 @@ export default function FrameworkMatrix({ frameworks, frameworkKeys, roles, goal
 
       {/* Grid: horizontal scroll stays inside the card on narrow screens */}
       <div ref={scrollRef} style={{ overflowX: "auto", paddingBottom: 4 }}>
-        <div role="grid" aria-label={`Framework recommendations by ${colNoun}`} style={{ display: "grid", gridTemplateColumns: `minmax(${LABEL_W}px, 1.6fr) repeat(${columns.length}, minmax(${COL_W}px, 1fr))`, gap: 2, minWidth: LABEL_W + columns.length * (COL_W + 2) }}>
+        <div ref={gridRef} role="grid" aria-label={`Framework recommendations by ${colNoun}`} style={{ display: "grid", gridTemplateColumns: `minmax(${LABEL_W}px, 1.6fr) repeat(${columns.length}, minmax(${COL_W}px, 1fr))`, gap: 2, minWidth: LABEL_W + columns.length * (COL_W + 2) }}>
           <div role="row" style={{ display: "contents" }}>
             <div role="columnheader" style={sticky} />
             {columns.map(col => (
@@ -115,7 +132,7 @@ export default function FrameworkMatrix({ frameworks, frameworkKeys, roles, goal
             ))}
           </div>
 
-          {frameworkKeys.map(fw => {
+          {frameworkKeys.map((fw, r) => {
             const isRec = recommended.includes(fw);
             return (
               <div key={fw} role="row" style={{ display: "contents" }}>
@@ -123,16 +140,17 @@ export default function FrameworkMatrix({ frameworks, frameworkKeys, roles, goal
                   <span aria-hidden="true" style={{ width: 8, height: 8, borderRadius: "50%", background: frameworks[fw].color, flexShrink: 0 }} />
                   <span style={{ fontSize: 12, color: isRec ? "#c9d1dd" : "#7d8fa8", fontWeight: isRec ? 700 : 400, lineHeight: 1.3 }}>{fwShort(fw)}</span>
                 </div>
-                {columns.map(col => {
+                {columns.map((col, c) => {
                   const cell = cells[fw][col.id];
                   const step = stepFor(cell.count, max);
                   const isActive = active && active.fw === fw && active.col === col.id;
                   const isCurrent = col.id === current;
                   return (
-                    <div key={col.id} role="gridcell" tabIndex={0}
+                    <div key={col.id} role="gridcell" data-pos={`${r}-${c}`} tabIndex={focusPos.r === r && focusPos.c === c ? 0 : -1}
                       aria-label={`${frameworks[fw].name}, ${col.label}: recommended for ${cell.count} of ${max} ${otherNoun}, starting point for ${cell.starts}`}
                       onPointerEnter={() => setActive({ fw, col: col.id })} onPointerLeave={() => setActive(null)}
-                      onFocus={() => setActive({ fw, col: col.id })} onBlur={() => setActive(null)}
+                      onFocus={() => { setActive({ fw, col: col.id }); setFocusPos({ r, c }); }} onBlur={() => setActive(null)}
+                      onKeyDown={e => onCellKeyDown(e, r, c)}
                       style={{
                         position: "relative", minHeight: 30, borderRadius: 4, cursor: "default", outline: "none",
                         background: step < 0 ? EMPTY : RAMP[step],
@@ -151,8 +169,8 @@ export default function FrameworkMatrix({ frameworks, frameworkKeys, roles, goal
         </div>
       </div>
 
-      {/* Readout: same content on hover and keyboard focus */}
-      <div aria-live="polite" style={{ minHeight: 64, marginTop: 12, padding: "10px 14px", background: "rgba(0,0,0,0.15)", borderRadius: 8 }}>
+      {/* Readout: same content on hover and keyboard focus (screen readers get the cell's aria-label) */}
+      <div style={{ minHeight: 64, marginTop: 12, padding: "10px 14px", background: "rgba(0,0,0,0.15)", borderRadius: 8 }}>
         {activeCell ? (
           <div>
             <div style={{ fontSize: 14, color: "#e8f0f8", fontWeight: 700 }}>
