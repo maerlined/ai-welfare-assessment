@@ -216,8 +216,11 @@ ai-welfare-assessment/
 ├── vite.config.js                 # React plugin + base path '/ai-welfare-assessment/'
 └── src/
     ├── main.jsx                   # React root (StrictMode)
-    └── App.jsx                    # The entire app: data, recommendation engine, tiering, UI
+    ├── App.jsx                    # Data, recommendation engine, tiering, UI
+    └── FrameworkMatrix.jsx        # Heatmap of the recommendation table (Frameworks step)
 ```
+
+*(Changed 2026-10-06: `App.jsx` was described as ~~"The entire app"~~. The heatmap now lives in its own component, `FrameworkMatrix.jsx`, which reads everything from the props `App` passes in.)*
 
 `src/App.jsx` is organised top to bottom as:
 
@@ -336,6 +339,8 @@ All content is plain data at the top of `src/App.jsx`. You don't need to touch a
 - **GitHub Actions** are pinned to version tags (`@v4`, `@v3`) rather than commit SHAs.
 
 Possible next steps: exportable results (PDF/Markdown), shareable URL state, per-indicator evidence notes, a standalone framework-comparison view, and accessibility improvements.
+
+*(2026-10-06: a first comparison view now exists. It's the "Where each framework comes up" heatmap on the Frameworks step, by role or by question, with a table view.)*
 
 ---
 
