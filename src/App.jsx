@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import FrameworkMatrix from "./FrameworkMatrix";
 
 // ===== EXPANDED FRAMEWORKS (10 total) =====
 const FRAMEWORKS = {
@@ -278,6 +279,11 @@ export default function App() {
                 </div>);
               })}
             </div>
+
+            <Card style={{ marginTop: 24 }}><Label>Where each framework comes up</Label>
+              <FrameworkMatrix frameworks={FRAMEWORKS} frameworkKeys={FRAMEWORK_KEYS} roles={ROLES} goals={GOALS} getRecommendation={getRecommendation}
+                currentRole={role} currentGoal={goal} recommended={[rec.primary, rec.secondary, rec.tertiary]} />
+            </Card>
 
             {/* Fork: assess a system or stop here */}
             <div style={{ marginTop: 32, marginBottom: 8 }}><Label>Do you have a specific AI system to assess?</Label></div>
