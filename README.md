@@ -220,7 +220,7 @@ ai-welfare-assessment/
     └── FrameworkMatrix.jsx        # Heatmap of the recommendation table (Frameworks step)
 ```
 
-*(Changed 2026-10-06: `App.jsx` was described as ~~"The entire app"~~. The heatmap now lives in its own component, `FrameworkMatrix.jsx`, which reads everything from the props `App` passes in.)*
+The heatmap on the Frameworks step lives in `src/FrameworkMatrix.jsx`. It reads everything from the props `App` passes in (`FRAMEWORKS`, `ROLES`, `GOALS`, `getRecommendation`), so new frameworks, roles and goals show up in it automatically.
 
 `src/App.jsx` is organised top to bottom as:
 
@@ -281,16 +281,23 @@ The Chrome config opens `http://localhost:5173`. Vite redirects that to the `/ai
 
 ## Deployment
 
-Deployment is fully automated by [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml):
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) builds the site and deploys it to GitHub Pages:
 
-1. **Trigger:** every push to `main`, or a manual run (*Actions → Deploy to GitHub Pages → Run workflow*).
+1. **Trigger:** a push to `main`, or a manual run (*Actions → Deploy to GitHub Pages → Run workflow*).
 2. **Build job:** checkout → Node 20 (npm cache) → `npm ci` → `npm run build` → upload `dist/` as a Pages artifact.
 3. **Deploy job:** `actions/deploy-pages@v4` publishes the artifact to the `github-pages` environment.
 
-**To deploy from a fork:**
+The workflow only deploys where Pages is set to **GitHub Actions** as its source. The two existing sites differ:
+
+| Site | Pages source | How it is updated |
+|---|---|---|
+| **Canonical:** https://arsam-shaheen.github.io/ai-welfare-assessment/ | The `gh-pages` branch (legacy "deploy from a branch") | A built copy of the app is committed to `gh-pages` by hand (last on 2026-03-09). The workflow doesn't deploy here; its one run on upstream failed. |
+| **Preview:** https://maerlined.github.io/ai-welfare-assessment/ (maerlined fork) | GitHub Actions | Run the workflow manually after merging to `main`: `gh workflow run deploy.yml -R maerlined/ai-welfare-assessment --ref main`. On this fork, pushes to `main` haven't triggered a run so far. |
+
+**To deploy from your own fork:**
 
 1. In your fork, go to *Settings → Pages* and set **Source** to **GitHub Actions**.
-2. Push to `main` (or run the workflow manually).
+2. Run the workflow manually, or push to `main`. If a push doesn't start a run, use the manual run.
 3. The site will be at `https://<your-username>.github.io/ai-welfare-assessment/`.
 
 > If you rename the repository, update `base` in `vite.config.js` to match (`/<new-repo-name>/`). Otherwise the asset paths break and the deployed page is blank.
@@ -315,6 +322,7 @@ All content is plain data at the top of `src/App.jsx`. You don't need to touch a
 - [ ] Add an entry to `FRAMEWORKS` with `name`, `tagline`, `audience`, `does`, `gap`, `when`, `color`.
 - [ ] Reference its key from at least one role × goal entry in `getRecommendation()`.
 - [ ] Update the hard-coded "10 frameworks" wording in the intro, profile and recommendation copy (search `App.jsx` for `10`).
+- [ ] Optionally add a short row label to `SHORT_FW` in `src/FrameworkMatrix.jsx`. Without one, the heatmap shows the full name.
 
 **Checklist for adding a role or goal**
 
@@ -338,9 +346,7 @@ All content is plain data at the top of `src/App.jsx`. You don't need to touch a
 - **Repository history** still contains `node_modules/` from the first commits (later removed and git-ignored), so clones are larger than they need to be.
 - **GitHub Actions** are pinned to version tags (`@v4`, `@v3`) rather than commit SHAs.
 
-Possible next steps: exportable results (PDF/Markdown), shareable URL state, per-indicator evidence notes, a standalone framework-comparison view, and accessibility improvements.
-
-*(2026-10-06: a first comparison view now exists. It's the "Where each framework comes up" heatmap on the Frameworks step, by role or by question, with a table view.)*
+Possible next steps: exportable results (PDF/Markdown), shareable URL state, per-indicator evidence notes, a fuller framework-comparison view (the Frameworks step already has a heatmap of the recommendation table), and accessibility improvements.
 
 ---
 
