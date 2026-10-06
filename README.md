@@ -362,7 +362,7 @@ For changes to the substantive content (framework descriptions, recommendations,
 
 ### Process on this fork (maerlined)
 
-This fork follows process tier **T3** (full process: branch + PR, review before merge, merge commit). **GitHub Issues stay off here**, by Maerlin's decision of 2026-10-07: the fork is public, so planning notes stay private, and issues on a fork never reach the upstream owner. The reason for each change lives in its PR description and in the private plans; a PR without an issue is not a process deviation on this fork.
+This fork follows process tier **T3** (full process: branch + PR, review before merge, merge commit). **GitHub Issues stay off here**: Maerlin decided this on 2026-10-06 and confirmed it under the process tiers on 2026-10-07. The fork is public, so planning notes stay private, and issues on a fork never reach the upstream owner. The reason for each change lives in its PR description and in the private plans; a PR without an issue is not a process deviation on this fork. The rule behind this is the "public forks" exception to "Issue before work" in §2 of Maerlin's process-tier spec (`user-specs/project-tiers.md`, a private repository).
 
 ---
 
