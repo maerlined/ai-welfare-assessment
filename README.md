@@ -360,6 +360,10 @@ Possible next steps: exportable results (PDF/Markdown), shareable URL state, per
 
 For changes to the substantive content (framework descriptions, recommendations, tier thresholds), please explain your reasoning or cite sources in the PR description. The content matters more than the code here.
 
+### Process on this fork (maerlined)
+
+This fork follows process tier **T3** (full process: branch + PR, review before merge, merge commit). **GitHub Issues stay off here**, by Maerlin's decision of 2026-10-07: the fork is public, so planning notes stay private, and issues on a fork never reach the upstream owner. The reason for each change lives in its PR description and in the private plans; a PR without an issue is not a process deviation on this fork.
+
 ---
 
 ## License
